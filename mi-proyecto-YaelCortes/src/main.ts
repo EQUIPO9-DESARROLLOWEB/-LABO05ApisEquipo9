@@ -1,274 +1,109 @@
+import { createClient } from '@supabase/supabase-js'
+
 /**
- * PASO 1: DATOS PRIMITIVOS (Configuración base)
- * Definimos valores básicos con tipado explícito para que el compilador sepa 
- * exactamente qué tipo de datos estamos manejando desde el inicio.
+ * PASO 1: CONFIGURACIÓN DE APIS EXTERNAS
  */
-// Declaramos la URL base como string para no escribirla muchas veces.
-const API_URL: string = "https://jsonplaceholder.typicode.com"; 
-
-// El ID que usaremos para las pruebas. Especificamos que es un número.
-const POST_ID_TO_SEARCH: number = 1; 
-
-// Un booleano para decidir si mostramos mensajes de log detallados.
-const IS_DEBUG_MODE: boolean = true; 
+const API_URL: string = "https://jsonplaceholder.typicode.com";
+const POST_ID_TO_SEARCH: number = 1;
 
 /**
- * PASO 2: INTERFACES (El contrato de datos)
- * Creamos una interfaz 'Post'. Esto no genera código JS, es una guía para TS
- * que define la estructura exacta que esperamos recibir de la API.
+ * PASO 2: CONFIGURACIÓN DE SUPABASE
+ */
+const SUPABASE_URL: string = "https://gpkpwmviqnvopknmeofs.supabase.co"; 
+const SUPABASE_KEY: string = "sb_publishable_nvxxyA9Lq1jYOhl5YhvFxQ_QFEiZGx7";
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/**
+ * PASO 3: INTERFACES (Contratos de datos)
  */
 interface Post {
-  userId: number;   // ID del autor (numérico)
-  id: number;       // ID único del post (numérico)
-  title: string;    // Título del post (texto)
-  body: string;     // Contenido del post (texto)
+  userId: number;
+  id: number;
+  title: string;
+  body: string;
+}
+
+interface Comment {
+  postId: number;
+  id: number;
+  name: string;
+  email: string;
+  body: string;
+}
+
+// Interfaz de la base de datos
+interface Voter {
+  voter_id: number;
+  full_name: string;
+  curp: string;
+  email: string;
+  phone_number: string;
+  is_verified: boolean;
 }
 
 /**
- * PASO 3: FUNCIÓN PARA OBTENER DATOS (GET)
- * Usamos 'async' para indicar que la función maneja procesos de llamadas a APIS.
- * 'Promise<void>' indica que la función no retorna un valor, sino una promesa vacía.
+ * PASO 4: FUNCIONES DE JSONPLACEHOLDER (Retos anteriores)
  */
 const fetchSinglePost = async (id: number): Promise<void> => {
-  // Aplicamos un estilo visual a la consola si estamos en modo debug.
-  if (IS_DEBUG_MODE) {
-    console.log(`%c [LAB 1] Buscando post con ID: ${id}...`, "color: cyan; font-weight: bold;");
-  }
-
   try {
-    // 'fetch' realiza la petición HTTP. 'await' espera a que se complete.
-    // Usamos backticks (``) para concatenar la URL y el ID de forma dinámica.
     const response = await fetch(`${API_URL}/posts/${id}`);
-
-    // Verificamos si la respuesta es exitosa (status 200-299).
-    if (!response.ok) {
-        throw new Error(`Error en la petición: ${response.status}`);
-    }
-
-    // Convertimos el cuerpo de la respuesta a JSON.
-    // Le decimos a TS que el resultado es de tipo 'Post'.
     const data: Post = await response.json();
-
-    // Imprimimos el resultado accediendo a las propiedades definidas en la interfaz.
-    console.log("✅ Post recuperado:");
-    console.log(`   - Título: ${data.title}`);
-    console.log(`   - Cuerpo: ${data.body.substring(0, 50)}...`);
-    
+    console.log("%c ✅ [JSONPlaceholder] Post:", "color: cyan", data.title);
   } catch (error) {
-    // Si algo falla (red, error de servidor, etc.), el error cae aquí.
-    console.error("❌ Fallo en Lab 1:", error);
+    console.error("Error en Post:", error);
   }
 };
-
-/**
- * PASO 4: FUNCIÓN PARA CREAR DATOS (POST)
- * Aquí aprendemos a enviar un objeto JS al servidor.
- */
-const createNewPost = async (): Promise<void> => {
-  console.log("%c [LAB 2] Creando un nuevo recurso...", "color: orange; font-weight: bold;");
-
-  // Definimos un objeto literal que sigue la lógica de nuestra interfaz.
-  const myNewPost = {
-    title: "Mi Post de Prueba",
-    body: "Contenido generado desde el laboratorio de TypeScript.",
-    userId: 10
-  };
-
-  try {
-    // En el fetch, pasamos un objeto de configuración como segundo parámetro.
-    const response = await fetch(`${API_URL}/posts`, {
-      method: "POST", // Especificamos que vamos a "enviar/crear".
-      
-      // El servidor requiere una cadena de texto, no un objeto JS.
-      // 'JSON.stringify' hace esa conversión.
-      body: JSON.stringify(myNewPost), 
-      
-      headers: {
-        // Metadata: Informamos al servidor que el contenido es JSON con codificación UTF-8.
-        "Content-type": "application/json; charset=UTF-8", 
-      },
-    });
-
-    // La API responde con el objeto creado y un nuevo ID (usualmente el 101).
-    const createdPost: Post = await response.json();
-    
-    console.log("✅ Recurso creado exitosamente en el servidor:");
-    console.log(createdPost);
-
-  } catch (error) {
-    console.error("❌ Fallo en Lab 2:", error);
-  }
-};
-/*
-        ##################################################
-        EL RETO 
-        ##################################################
-*/
-
-/**
- * PASO 6: RETO DE RECURSOS ANIDADOS (Pistas y estructura)
- * Objetivo: Obtener los comentarios que pertenecen a un Post específico.
- */
-// PISTA A: Crea la interfaz 'Comment'. 
-// Recuerda que la API devuelve: postId, id, name, email y body.
-
-/**
- * PASO 7: FUNCIÓN DE BÚSQUEDA DE COMENTARIOS
- * Instrucciones:
- * 1. Usa la URL: ${API_URL}/posts/${id}/comments
- * 2. Recuerda que la respuesta es una LISTA (Array) de objetos Comment.
- * 3. Usa un bucle o método de array (como .forEach) para mostrar los datos.
- */
-/**
- * RETO DE LABORATORIO: Obtener recursos anidados (Comments)
- * * Instrucciones para el estudiante:
- * Sigue los pasos numerados para completar la función.
- */
-
-/**
- * INTERFAZ PARA EL RETO
- */
-interface Comment {
-    postId: number;
-    id: number;
-    name: string;
-    email: string;
-    body: string;
-}
 
 const fetchCommentsByPost = async (postId: number): Promise<void> => {
-  
-  // 1. [LOG]: Mensaje con estilo avisando la búsqueda
-  console.log(`%c [RETO] Buscando comentarios para el post ID: ${postId}...`, "color: #ffeb3b; font-weight: bold; background: #333;");
+  try {
+    const response = await fetch(`${API_URL}/posts/${postId}/comments`);
+    const data: Comment[] = await response.json();
+    console.log(`%c ✅ [RETO] ${data.length} comentarios encontrados.`, "color: yellow");
+    data.forEach(c => console.log(`   - Email: ${c.email}`));
+  } catch (error) {
+    console.error("Error en Comentarios:", error);
+  }
+};
+
+/**
+ * PASO 5: FUNCIÓN DE SUPABASE (base de datos real)
+ */
+const getVoters = async (): Promise<void> => {
+  console.log("%c [SUPABASE] Consultando tabla 'voters'...", "color: #3ecf8e; font-weight: bold;");
 
   try {
-    // 2. [PETICIÓN]: Usamos fetch con la URL de comentarios anidados
-    const response = await fetch(`${API_URL}/posts/${postId}/comments`);
+    const { data, error } = await supabase
+      .from('voters') // Nombre exacto de la tabla
+      .select('*');
 
-    // 3. [VALIDACIÓN]: Si la respuesta falla, lanzamos error
-    if (!response.ok) {
-        throw new Error(`Error al cargar comentarios: ${response.status}`);
+    if (error) throw error;
+
+    const listaVoters: Voter[] = data as Voter[];
+
+    if (listaVoters.length === 0) {
+      console.warn("⚠️ La tabla 'voters' está vacía. Agrega un registro en el dashboard de Supabase.");
+    } else {
+      console.log("✅ Lista de Votantes recuperada:");
+      console.table(listaVoters); // Muestra la tabla en la consola
     }
-
-    // 4. [TRADUCCIÓN]: Convertimos a JSON indicando que es un Array de Comment
-    const data: Comment[] = await response.json();
-
-    // 5. [PROCESAMIENTO]: Mostramos cuántos llegaron
-    console.log(`✅ Se recuperaron ${data.length} comentarios.`);
-
-    // 6. [RECORRIDO]: Mostramos solo los emails en la consola
-    console.log("📧 Lista de correos de los comentadores:");
-    data.forEach((comment) => {
-        console.log(`  - ${comment.email}`);
-    });
-
-  } catch (error) {
-    // 7. [ERRORES]
-    console.error("❌ Fallo en el Reto de Comentarios:", error);
+  } catch (error: any) {
+    console.error("❌ Error de Supabase:", error.message);
   }
 };
 
 /**
- * PISTA FINAL DE EJECUCIÓN:
- * Dentro de tu función 'runLaboratory', no olvides añadir:
- * await fetchCommentsByPost(POST_ID_TO_SEARCH);
- */
-
-/*
-    ################################################################################
-    
-    Supabase challenge
-
-    #################################################################################
-
-
-
- */
-
-/**
- * PASO 1: CONFIGURACIÓN DE CONEXIÓN
- * Sustituye estos valores con los de tu proyecto en Supabase (Project Settings > API)
- */
-const SUPABASE_URL: string = "TU_URL_DE_SUPABASE";
-const SUPABASE_KEY: string = "TU_KEY";
-
-/**
- * PASO 2: INICIALIZACIÓN DEL CLIENTE
- * Creamos el objeto que nos permite hablar con la base de datos.
- */
-
-// DESCOMENTAR LA LINEA DE ABAJO
-// const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-/**
- * PASO 3: INTERFAZ DE DATOS
- * Definimos la estructura exacta de la tabla que vemos en tu imagen.
- */
-interface Auto {
-  id_auto: number;       // Columna ID (Primary Key)
-  patente: string;       // Columna Patente (Varchar)
-  id_propietario: number; // Columna ID Propietario (Foreign Key)
-}
-
-/**
- * PASO 4: LA FUNCIÓN DE LECTURA (GET)
- * Esta función entra a la base de datos y trae los registros.
- */
-const getAutos = async (): Promise<void> => {
-  
-  // Realizamos la consulta: 
-  // 1. .from('autos') -> Selecciona la tabla de tu imagen.
-  // 2. .select('*')   -> Pide todas las columnas de esa tabla.
-
-  // DESCOMENTAR ESTAS LINEAS QUE SIGUEN
-
-  /*const { data, error } = await supabase
-    .from('autos')   
-    .select('*');
-
-  // Si Supabase responde con un error (ej: tabla inexistente o sin permisos RLS)
-  if (error) {
-    console.error("❌ Error al obtener los autos:", error.message);
-    return;
-  }
-
-  // Si todo sale bien, 'data' contiene el array de objetos.
-  // Usamos 'as Auto[]' para decirle a TS que confíe en nuestra interfaz.
-  const listaAutos: Auto[] = data as Auto[];
-
-  // Mostramos el resultado final en la consola del navegador
-  console.log("✅ Lista de autos recibida:");
-  console.table(listaAutos); 
-
-  HASTA AQUI DEBES DESCOMENTAR
-  */ 
-};
-
-
-
-
-
-
-
-/**
- * PASO final: EJECUCIÓN DEL LABORATORIO
- * Creamos una función orquestadora para manejar el flujo de las llamadas.
+ * PASO FINAL: EJECUCIÓN
  */
 const runLaboratory = async () => {
-  console.log("%c --- INICIO DEL EXPERIMENTO ---", "background: #222; color: #bada55; padding: 5px;");
+  console.log("%c --- INICIO DEL LABORATORIO ---", "background: #222; color: #bada55; padding: 5px;");
   
-  await fetchSinglePost(POST_ID_TO_SEARCH); 
-  await createNewPost();     
+  await fetchSinglePost(POST_ID_TO_SEARCH);
+  await fetchCommentsByPost(POST_ID_TO_SEARCH);
   
-  // LLAMADA AL RETO:
-  await fetchCommentsByPost(POST_ID_TO_SEARCH); 
+  // Llamada a tu base de datos de Supabase
+  await getVoters();
   
-  console.log("%c --- EXPERIMENTO FINALIZADO ---", "background: #222; color: #bada55; padding: 5px;");
+  console.log("%c --- FIN DEL LABORATORIO ---", "background: #222; color: #bada55; padding: 5px;");
 };
 
-
-
-
-
-// Disparamos todo el proceso.
 runLaboratory();
